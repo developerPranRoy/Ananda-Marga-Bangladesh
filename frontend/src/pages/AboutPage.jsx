@@ -1,573 +1,158 @@
-import { useState, useEffect, useRef } from "react";
-import MusicPlayer from "../components/common/MusicPlayer";
+import { useRef, useState, useEffect } from "react";
 
-// ─── Data ────────────────────────────────────────────────────────────────────
-
-const TIMELINE = [
-    {
-        year: "১৯৫৫",
-        title: "আনন্দমার্গের প্রতিষ্ঠা",
-        desc: "শ্রী শ্রী আনন্দমূর্তি জী বিহার, ভারতে আনন্দমার্গ প্রচারক সংঘ প্রতিষ্ঠা করেন।",
-        icon: "🕉️",
-    },
-    {
-        year: "১৯৬৫",
-        title: "বাংলাদেশে আগমন",
-        desc: "তৎকালীন পূর্ব পাকিস্তানে আনন্দমার্গের প্রথম শাখা স্থাপিত হয়।",
-        icon: "🌱",
-    },
-    {
-        year: "১৯৭২",
-        title: "স্বাধীন বাংলাদেশে প্রসার",
-        desc: "মুক্তিযুদ্ধের পর স্বাধীন বাংলাদেশে সংগঠন পুনর্গঠিত হয় এবং সেবামূলক কার্যক্রম শুরু হয়।",
-        icon: "🇧🇩",
-    },
-    {
-        year: "১৯৮০",
-        title: "শিক্ষা কার্যক্রম",
-        desc: "AMURT বাংলাদেশে শিক্ষা ও স্বাস্থ্য কেন্দ্র স্থাপনের মাধ্যমে সমাজসেবা শুরু করে।",
-        icon: "📚",
-    },
-    {
-        year: "২০০০",
-        title: "বিস্তার ও উন্নয়ন",
-        desc: "৬৪ জেলায় কার্যক্রম সম্প্রসারিত হয়, যোগ ও মেডিটেশন কেন্দ্রের সংখ্যা দ্রুত বৃদ্ধি পায়।",
-        icon: "📈",
-    },
-    {
-        year: "আজ",
-        title: "অব্যাহত যাত্রা",
-        desc: "সারাদেশে ২০০+ সেবাকেন্দ্র ও ১০,০০০+ স্বেচ্ছাসেবক নিয়ে আনন্দমার্গ এগিয়ে চলেছে।",
-        icon: "✨",
-    },
-];
-
-const VALUES = [
-    {
-        icon: "🧘",
-        title: "আত্মজ্ঞান",
-        desc: "নিজেকে জানার মাধ্যমে পরমসত্তার সাথে সংযোগ স্থাপন — এটাই আনন্দমার্গের মূল শিক্ষা।",
-        color: "#f59e0b",
-    },
-    {
-        icon: "💛",
-        title: "সর্বজনীন প্রেম",
-        desc: "জাতি, ধর্ম, বর্ণ নির্বিশেষে সকল মানুষকে ভালোবাসা ও সেবা করা।",
-        color: "#14b8a6",
-    },
-    {
-        icon: "⚖️",
-        title: "নৈতিকতা",
-        desc: "ব্যক্তিগত ও সামাজিক জীবনে উচ্চ নৈতিক মানদণ্ড বজায় রাখা।",
-        color: "#a78bfa",
-    },
-    {
-        icon: "🌍",
-        title: "বিশ্বভ্রাতৃত্ব",
-        desc: "সমগ্র মানবজাতি একটি পরিবার — এই দর্শনে বিশ্বাসী আনন্দমার্গ।",
-        color: "#34d399",
-    },
-];
-
-const LEADERS = [
-    {
-        name: "শ্রী শ্রী আনন্দমূর্তি জী",
-        role: "প্রতিষ্ঠাতা",
-        desc: "১৯২১ সালে জন্মগ্রহণকারী এই মহান আধ্যাত্মিক নেতা ১৯৫৫ সালে আনন্দমার্গ প্রতিষ্ঠা করেন।",
-        initial: "আ",
-        color: "from-amber-500/30 to-orange-500/20",
-        border: "border-amber-400/30",
-        textColor: "#fbbf24",
-    },
-    {
-        name: "দাদা রঞ্জিতানন্দ",
-        role: "বাংলাদেশ সেক্রেটারি",
-        desc: "দীর্ঘ তিন দশক ধরে বাংলাদেশে আনন্দমার্গের কার্যক্রম পরিচালনায় নিয়োজিত।",
-        initial: "দ",
-        color: "from-teal-500/30 to-cyan-500/20",
-        border: "border-teal-400/30",
-        textColor: "#2dd4bf",
-    },
-    {
-        name: "দিদি আনন্দপ্রভা",
-        role: "মহিলা কল্যাণ বিভাগ",
-        desc: "নারী শিক্ষা ও ক্ষমতায়নে অগ্রণী ভূমিকা পালন করে আসছেন।",
-        initial: "দি",
-        color: "from-rose-500/30 to-pink-500/20",
-        border: "border-rose-400/30",
-        textColor: "#fb7185",
-    },
-];
-
-// ─── Scroll Reveal Hook ───────────────────────────────────────────────────────
+const bn = { fontFamily: "'Noto Serif Bengali', serif" };
 
 function useReveal() {
     const ref = useRef(null);
-    const [visible, setVisible] = useState(false);
+    const [vis, setVis] = useState(false);
     useEffect(() => {
-        const obs = new IntersectionObserver(
-            ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
-            { threshold: 0.15 }
-        );
+        const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVis(true); obs.disconnect(); } }, { threshold: 0.12 });
         if (ref.current) obs.observe(ref.current);
         return () => obs.disconnect();
     }, []);
-    return [ref, visible];
+    return [ref, vis];
 }
 
-// ─── Section Components ───────────────────────────────────────────────────────
+const TIMELINE = [
+    { year: "১৯৫৫", title: "আনন্দমার্গের প্রতিষ্ঠা", desc: "শ্রী শ্রী আনন্দমূর্তি জী বিহারে আনন্দমার্গ প্রতিষ্ঠা করেন।", icon: "🕉️" },
+    { year: "১৯৬৫", title: "বাংলাদেশে আগমন", desc: "তৎকালীন পূর্ব পাকিস্তানে প্রথম শাখা স্থাপিত হয়।", icon: "🌱" },
+    { year: "১৯৭২", title: "স্বাধীন বাংলাদেশে প্রসার", desc: "মুক্তিযুদ্ধের পর সংগঠন পুনর্গঠিত হয় ও সেবামূলক কার্যক্রম শুরু হয়।", icon: "🇧🇩" },
+    { year: "১৯৮০", title: "শিক্ষা কার্যক্রম", desc: "AMURT বাংলাদেশে শিক্ষা ও স্বাস্থ্য কেন্দ্র স্থাপন করে।", icon: "📚" },
+    { year: "২০০০", title: "বিস্তার ও উন্নয়ন", desc: "৬৪ জেলায় কার্যক্রম সম্প্রসারিত হয়।", icon: "📈" },
+    { year: "আজ", title: "অব্যাহত যাত্রা", desc: "২০০+ সেবাকেন্দ্র ও ১০,০০০+ স্বেচ্ছাসেবক নিয়ে এগিয়ে চলেছে।", icon: "✨" },
+];
 
-function HeroBanner() {
+const VALUES = [
+    { icon: "🧘", title: "আত্মজ্ঞান", desc: "নিজেকে জানার মাধ্যমে পরমসত্তার সাথে সংযোগ।", color: "#f59e0b" },
+    { icon: "💛", title: "সর্বজনীন প্রেম", desc: "জাতি-ধর্ম নির্বিশেষে সকলকে ভালোবাসা ও সেবা করা।", color: "#2dd4bf" },
+    { icon: "⚖️", title: "নৈতিকতা", desc: "ব্যক্তিগত ও সামাজিক জীবনে উচ্চ নৈতিক মানদণ্ড।", color: "#a78bfa" },
+    { icon: "🌍", title: "বিশ্বভ্রাতৃত্ব", desc: "সমগ্র মানবজাতি একটি পরিবার — এই দর্শনে বিশ্বাসী।", color: "#34d399" },
+];
+
+export default function AboutPage() {
+    const [valRef, valVis] = useReveal();
+    const [tlRef, tlVis] = useReveal();
+
     return (
-        <section
-            className="relative pt-28 sm:pt-32 pb-20 sm:pb-28 px-4 sm:px-6 overflow-hidden"
-            style={{ background: "linear-gradient(135deg, #0d1f1e 0%, #0f2a28 50%, #0d1a10 100%)" }}
-        >
-            {/* BG decorations */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full bg-amber-500/6 blur-3xl" />
-                <div className="absolute bottom-0 left-0 w-[300px] h-[300px] rounded-full bg-teal-500/8 blur-3xl" />
-                <svg className="absolute inset-0 w-full h-full opacity-[0.025]" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <pattern id="dots" width="30" height="30" patternUnits="userSpaceOnUse">
-                            <circle cx="2" cy="2" r="1" fill="#f59e0b" />
-                        </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" fill="url(#dots)" />
-                </svg>
-                {/* Diagonal line accent */}
-                <div
-                    className="absolute top-0 right-0 w-px h-full opacity-10"
-                    style={{ background: "linear-gradient(180deg, transparent, #f59e0b, transparent)", left: "60%" }}
-                />
-            </div>
-
-            <div className="relative max-w-5xl mx-auto">
-                <div className="grid md:grid-cols-2 gap-10 items-center">
-                    <div>
-                        <div
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-400/20 text-amber-300 text-xs tracking-widest uppercase mb-6"
-                        >
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                            আমাদের পরিচয়
+        <>
+            {/* ── Hero ── */}
+            <section style={{ paddingTop: 120, paddingBottom: 80, padding: "120px 24px 80px", background: "linear-gradient(135deg,#0d1f1e 0%,#0f2a28 50%,#0d1a10 100%)", position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", top: 0, right: 0, width: 400, height: 400, borderRadius: "50%", background: "rgba(245,158,11,0.05)", filter: "blur(60px)", pointerEvents: "none" }} />
+                <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gap: 48, alignItems: "center" }} className="md:grid-cols-2">
+                    <div style={{ animation: "fadeUp 0.8s ease both" }}>
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 14px", borderRadius: 999, background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", color: "#fcd34d", fontSize: 11, letterSpacing: 2, textTransform: "uppercase", marginBottom: 20 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#fbbf24" }} /> আমাদের পরিচয়
                         </div>
-
-                        <h1
-                            className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6"
-                            style={{
-                                fontFamily: "'Noto Serif Bengali', serif",
-                                animation: "fadeUp 0.8s ease both",
-                            }}
-                        >
-                            <span className="text-white">আনন্দমার্গ</span>
-                            <br />
-                            <span
-                                className="text-transparent bg-clip-text"
-                                style={{ backgroundImage: "linear-gradient(90deg, #f59e0b, #ea580c)" }}
-                            >
-                                বাংলাদেশ
-                            </span>
+                        <h1 style={{ ...bn, fontSize: "clamp(32px,5vw,54px)", fontWeight: 700, lineHeight: 1.15, marginBottom: 20 }}>
+                            <span style={{ color: "#fff" }}>আনন্দমার্গ</span><br />
+                            <span style={{ background: "linear-gradient(90deg,#f59e0b,#ea580c)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>বাংলাদেশ</span>
                         </h1>
-
-                        <p
-                            className="text-stone-400 text-sm sm:text-base leading-relaxed mb-8 max-w-lg"
-                            style={{ fontFamily: "'Noto Serif Bengali', serif", animation: "fadeUp 0.8s ease 0.2s both" }}
-                        >
-                            একটি আন্তর্জাতিক আধ্যাত্মিক ও সমাজসেবামূলক সংগঠন, যা মানুষের সর্বাঙ্গীণ উন্নয়নে নিবেদিত — ব্যক্তি থেকে সমাজ, আত্মা থেকে বিশ্ব।
+                        <p style={{ ...bn, color: "#a8a29e", fontSize: 15, lineHeight: 1.8, marginBottom: 28, maxWidth: 440 }}>
+                            একটি আন্তর্জাতিক আধ্যাত্মিক ও সমাজসেবামূলক সংগঠন — ব্যক্তি থেকে সমাজ, আত্মা থেকে বিশ্ব।
                         </p>
-
-                        <div
-                            className="flex flex-wrap gap-3"
-                            style={{ animation: "fadeUp 0.8s ease 0.35s both" }}
-                        >
-                            <a
-                                href="#timeline"
-                                className="px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-[#0d1f1e] font-bold text-sm hover:scale-105 transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/25"
-                                style={{ fontFamily: "'Noto Serif Bengali', serif" }}
-                            >
-                                আমাদের ইতিহাস
-                            </a>
-                            <a
-                                href="/"
-                                className="px-5 py-2.5 rounded-full border border-teal-400/30 text-teal-300 hover:bg-teal-500/10 text-sm transition-all duration-200"
-                                style={{ fontFamily: "'Noto Serif Bengali', serif" }}
-                            >
-                                ← হোমে ফিরুন
-                            </a>
-                        </div>
+                        <a href="#timeline" style={{ ...bn, display: "inline-block", padding: "10px 24px", borderRadius: 999, background: "linear-gradient(90deg,#f59e0b,#ea580c)", color: "#0d1f1e", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
+                            আমাদের ইতিহাস দেখুন
+                        </a>
                     </div>
 
-                    {/* Right — decorative stat ring */}
-                    <div className="hidden md:flex items-center justify-center">
-                        <div className="relative w-72 h-72">
-                            {/* Outer ring */}
-                            <div className="absolute inset-0 rounded-full border border-amber-400/15 animate-spin" style={{ animationDuration: "40s" }} />
-                            <div className="absolute inset-4 rounded-full border border-teal-400/10 animate-spin" style={{ animationDuration: "25s", animationDirection: "reverse" }} />
-                            <div className="absolute inset-8 rounded-full border border-amber-400/10" />
-
-                            {/* Center */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-amber-500/15 to-orange-500/10 border border-amber-400/20 flex flex-col items-center justify-center gap-1 backdrop-blur-sm">
-                                    <span className="text-4xl">🕉️</span>
-                                    <span className="text-amber-400/60 text-xs tracking-widest uppercase" style={{ fontFamily: "sans-serif" }}>Since</span>
-                                    <span className="text-amber-400 font-bold text-lg" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>১৯৫৫</span>
-                                </div>
-                            </div>
-
-                            {/* Floating stats */}
-                            {[
-                                { val: "৫০+", lbl: "বছর", deg: -60 },
-                                { val: "৬৪", lbl: "জেলা", deg: 60 },
-                                { val: "১০K+", lbl: "সদস্য", deg: 180 },
-                            ].map(({ val, lbl, deg }) => (
-                                <div
-                                    key={lbl}
-                                    className="absolute bg-[#0d1f1e]/90 border border-white/10 rounded-xl px-3 py-1.5 text-center backdrop-blur-sm"
-                                    style={{
-                                        transform: `rotate(${deg}deg) translateX(120px) rotate(${-deg}deg)`,
-                                        top: "50%", left: "50%", marginTop: "-28px", marginLeft: "-36px",
-                                    }}
-                                >
-                                    <div className="text-amber-400 font-bold text-sm" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>{val}</div>
-                                    <div className="text-stone-500 text-[10px]" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>{lbl}</div>
-                                </div>
+                    {/* Decorative ring */}
+                    <div className="hidden md:flex" style={{ alignItems: "center", justifyContent: "center" }}>
+                        <div style={{ position: "relative", width: 260, height: 260 }}>
+                            {[260, 200, 140].map((s) => (
+                                <div key={s} style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: s, height: s, borderRadius: "50%", border: "1px solid rgba(245,158,11,0.1)" }} />
                             ))}
+                            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                                <span style={{ fontSize: 40 }}>🕉️</span>
+                                <span style={{ ...bn, color: "#fbbf24", fontWeight: 700, fontSize: 18 }}>১৯৫৫</span>
+                                <span style={{ color: "#78716c", fontSize: 11 }}>থেকে সেবায়</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <style>{`
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(24px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
-        </section>
-    );
-}
-
-function MissionSection() {
-    const [ref, visible] = useReveal();
-    return (
-        <section
-            ref={ref}
-            className="py-16 sm:py-24 px-4 sm:px-6"
-            style={{ background: "#0f2218" }}
-        >
-            <div className="max-w-6xl mx-auto">
-                <div
-                    className="text-center mb-12 sm:mb-16 transition-all duration-700"
-                    style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateY(24px)" }}
-                >
-                    <div className="text-amber-500/60 text-xs tracking-widest uppercase mb-3" style={{ fontFamily: "sans-serif" }}>Our Mission</div>
-                    <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>
-                        আমাদের <span className="text-amber-400">লক্ষ্য ও আদর্শ</span>
-                    </h2>
-                    <p className="text-stone-400 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>
-                        আনন্দমার্গ বিশ্বাস করে যে মানুষের শারীরিক, মানসিক ও আধ্যাত্মিক — এই তিন স্তরের সমন্বিত উন্নয়নই প্রকৃত অগ্রগতি।
-                    </p>
-                </div>
-
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-                    {VALUES.map((v, i) => (
-                        <div
-                            key={v.title}
-                            className="group bg-white/4 rounded-2xl border border-white/8 p-6 hover:border-white/15 hover:bg-white/6 hover:-translate-y-1 transition-all duration-300"
-                            style={{
-                                opacity: visible ? 1 : 0,
-                                transform: visible ? "none" : "translateY(28px)",
-                                transition: `opacity 0.6s ease ${i * 0.1}s, transform 0.6s ease ${i * 0.1}s, border-color 0.3s, background 0.3s, translateY 0.3s`,
-                            }}
-                        >
-                            <div
-                                className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4"
-                                style={{ background: `${v.color}18`, border: `1px solid ${v.color}30` }}
+            {/* ── Values ── */}
+            <section ref={valRef} style={{ padding: "80px 24px", background: "#0f2218" }}>
+                <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+                    <div style={{ textAlign: "center", marginBottom: 48, opacity: valVis ? 1 : 0, transform: valVis ? "none" : "translateY(20px)", transition: "all 0.7s" }}>
+                        <div style={{ color: "rgba(245,158,11,0.6)", fontSize: 11, letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Our Values</div>
+                        <h2 style={{ ...bn, fontSize: "clamp(26px,4vw,40px)", fontWeight: 700, color: "#fff" }}>লক্ষ্য ও <span style={{ color: "#fbbf24" }}>আদর্শ</span></h2>
+                    </div>
+                    <div style={{ display: "grid", gap: 16 }} className="sm:grid-cols-2 lg:grid-cols-4">
+                        {VALUES.map((v, i) => (
+                            <div key={v.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 20, padding: 24, opacity: valVis ? 1 : 0, transform: valVis ? "none" : "translateY(28px)", transition: `all 0.6s ease ${i * 0.1}s` }}
+                                onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${v.color}30`; e.currentTarget.style.transform = "translateY(-4px)"; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; e.currentTarget.style.transform = "translateY(0)"; }}
                             >
-                                {v.icon}
+                                <div style={{ width: 48, height: 48, borderRadius: 14, background: `${v.color}15`, border: `1px solid ${v.color}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, marginBottom: 16 }}>{v.icon}</div>
+                                <h3 style={{ ...bn, color: "#fff", fontWeight: 700, fontSize: 16, marginBottom: 8 }}>{v.title}</h3>
+                                <p style={{ ...bn, color: "#78716c", fontSize: 13, lineHeight: 1.7 }}>{v.desc}</p>
                             </div>
-                            <h3 className="font-bold text-base text-white mb-2" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>{v.title}</h3>
-                            <p className="text-stone-400 text-sm leading-relaxed" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>{v.desc}</p>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
-            </div>
-        </section>
-    );
-}
+            </section>
 
-function TimelineSection() {
-    const [ref, visible] = useReveal();
-    return (
-        <section
-            id="timeline"
-            ref={ref}
-            className="py-16 sm:py-24 px-4 sm:px-6"
-            style={{ background: "linear-gradient(180deg, #0f2218 0%, #0d1f1e 100%)" }}
-        >
-            <div className="max-w-4xl mx-auto">
-                <div
-                    className="text-center mb-12 sm:mb-16 transition-all duration-700"
-                    style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateY(20px)" }}
-                >
-                    <div className="text-teal-400/60 text-xs tracking-widest uppercase mb-3" style={{ fontFamily: "sans-serif" }}>History</div>
-                    <h2 className="text-3xl sm:text-4xl font-bold text-white" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>
-                        আমাদের <span className="text-amber-400">ইতিহাস</span>
-                    </h2>
-                </div>
+            {/* ── Timeline ── */}
+            <section id="timeline" ref={tlRef} style={{ padding: "80px 24px", background: "linear-gradient(180deg,#0f2218,#0d1f1e)" }}>
+                <div style={{ maxWidth: 800, margin: "0 auto" }}>
+                    <div style={{ textAlign: "center", marginBottom: 56, opacity: tlVis ? 1 : 0, transition: "all 0.7s" }}>
+                        <div style={{ color: "rgba(20,184,166,0.6)", fontSize: 11, letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>History</div>
+                        <h2 style={{ ...bn, fontSize: "clamp(26px,4vw,40px)", fontWeight: 700, color: "#fff" }}>আমাদের <span style={{ color: "#fbbf24" }}>ইতিহাস</span></h2>
+                    </div>
 
-                {/* Timeline */}
-                <div className="relative">
-                    {/* Center line */}
-                    <div className="absolute left-6 sm:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-amber-500/40 via-teal-500/30 to-transparent sm:-translate-x-px" />
+                    <div style={{ position: "relative" }}>
+                        {/* center line */}
+                        <div className="hidden sm:block" style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 1, background: "linear-gradient(180deg,rgba(245,158,11,0.4),transparent)", transform: "translateX(-50%)" }} />
+                        <div className="sm:hidden" style={{ position: "absolute", left: 20, top: 0, bottom: 0, width: 1, background: "rgba(245,158,11,0.3)" }} />
 
-                    <div className="space-y-8 sm:space-y-0">
                         {TIMELINE.map((item, i) => {
-                            const isLeft = i % 2 === 0;
+                            const left = i % 2 === 0;
                             return (
-                                <div
-                                    key={item.year}
-                                    className={`relative flex items-start sm:items-center gap-6 sm:gap-0 ${isLeft ? "sm:flex-row" : "sm:flex-row-reverse"
-                                        }`}
-                                    style={{
-                                        opacity: visible ? 1 : 0,
-                                        transform: visible ? "none" : `translateX(${isLeft ? -20 : 20}px)`,
-                                        transition: `opacity 0.6s ease ${i * 0.12}s, transform 0.6s ease ${i * 0.12}s`,
-                                        marginBottom: "2rem",
-                                    }}
+                                <div key={item.year} style={{ position: "relative", display: "flex", alignItems: "center", marginBottom: 32, opacity: tlVis ? 1 : 0, transform: tlVis ? "none" : `translateX(${left ? -20 : 20}px)`, transition: `all 0.6s ease ${i * 0.1}s` }}
+                                    className={`sm:${left ? "flex-row" : "flex-row-reverse"}`}
                                 >
-                                    {/* Content card */}
-                                    <div className={`flex-1 pl-14 sm:pl-0 ${isLeft ? "sm:pr-12 sm:text-right" : "sm:pl-12"}`}>
-                                        <div
-                                            className={`inline-block bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-5 hover:border-amber-400/20 hover:bg-amber-500/5 transition-all duration-300 max-w-sm ${isLeft ? "sm:ml-auto" : ""
-                                                }`}
+                                    {/* Card */}
+                                    <div style={{ flex: 1, paddingLeft: 48, paddingRight: 0 }} className={`sm:pl-0 sm:${left ? "pr-12 text-right" : "pl-12"}`}>
+                                        <div style={{ display: "inline-block", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, padding: "16px 20px", maxWidth: 300 }}
+                                            onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(245,158,11,0.2)")}
+                                            onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
                                         >
-                                            <div
-                                                className="text-amber-400 font-bold text-lg mb-1"
-                                                style={{ fontFamily: "'Noto Serif Bengali', serif" }}
-                                            >
-                                                {item.year}
-                                            </div>
-                                            <div className="text-white font-semibold text-sm sm:text-base mb-2" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>
-                                                {item.title}
-                                            </div>
-                                            <p className="text-stone-400 text-xs sm:text-sm leading-relaxed" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>
-                                                {item.desc}
-                                            </p>
+                                            <div style={{ ...bn, color: "#fbbf24", fontWeight: 700, fontSize: 17, marginBottom: 4 }}>{item.year}</div>
+                                            <div style={{ ...bn, color: "#f5f5f4", fontWeight: 600, fontSize: 14, marginBottom: 6 }}>{item.title}</div>
+                                            <p style={{ ...bn, color: "#78716c", fontSize: 12, lineHeight: 1.7 }}>{item.desc}</p>
                                         </div>
                                     </div>
 
-                                    {/* Center dot */}
-                                    <div className="absolute left-6 sm:left-1/2 sm:-translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-br from-amber-400/20 to-orange-500/10 border-2 border-amber-400/40 flex items-center justify-center text-lg z-10 shrink-0 top-4 sm:top-auto">
-                                        {item.icon}
-                                    </div>
+                                    {/* Dot */}
+                                    <div style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 36, height: 36, borderRadius: "50%", background: "rgba(245,158,11,0.15)", border: "2px solid rgba(245,158,11,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, zIndex: 1 }}
+                                        className="sm:static sm:transform-none sm:flex-shrink-0"
+                                    >{item.icon}</div>
 
-                                    {/* Spacer for opposite side on desktop */}
-                                    <div className="hidden sm:block flex-1" />
+                                    <div className="hidden sm:block" style={{ flex: 1 }} />
                                 </div>
                             );
                         })}
                     </div>
                 </div>
-            </div>
-        </section>
-    );
-}
+            </section>
 
-function LeadershipSection() {
-    const [ref, visible] = useReveal();
-    return (
-        <section
-            ref={ref}
-            className="py-16 sm:py-24 px-4 sm:px-6"
-            style={{ background: "#0d1a10" }}
-        >
-            <div className="max-w-5xl mx-auto">
-                <div
-                    className="text-center mb-12 transition-all duration-700"
-                    style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateY(20px)" }}
-                >
-                    <div className="text-rose-400/60 text-xs tracking-widest uppercase mb-3" style={{ fontFamily: "sans-serif" }}>Leadership</div>
-                    <h2 className="text-3xl sm:text-4xl font-bold text-white" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>
-                        নেতৃত্ব ও <span className="text-amber-400">অনুপ্রেরণা</span>
-                    </h2>
+            {/* ── Philosophy quote ── */}
+            <section style={{ padding: "80px 24px", background: "#0d1f1e", textAlign: "center" }}>
+                <div style={{ maxWidth: 640, margin: "0 auto" }}>
+                    <div style={{ ...bn, fontSize: 64, color: "rgba(245,158,11,0.15)", lineHeight: 1, marginBottom: 8 }}>"</div>
+                    <blockquote style={{ ...bn, fontSize: "clamp(20px,3vw,30px)", fontWeight: 700, color: "#fff", lineHeight: 1.5, marginBottom: 16 }}>
+                        আত্মমোক্ষার্থং জগদ্ধিতায় চ
+                    </blockquote>
+                    <p style={{ ...bn, color: "rgba(94,234,212,0.7)", fontSize: 16, marginBottom: 24 }}>নিজের মুক্তির জন্য এবং জগতের কল্যাণের জন্য</p>
+                    <div style={{ width: 60, height: 1, background: "linear-gradient(90deg,transparent,rgba(245,158,11,0.4),transparent)", margin: "0 auto 24px" }} />
+                    <p style={{ ...bn, color: "#78716c", fontSize: 14, lineHeight: 1.8 }}>
+                        এই মহাবাক্যটি আনন্দমার্গের দর্শনের মূলে। ব্যক্তির আধ্যাত্মিক উন্নতি ও সমাজের কল্যাণ — এই দুই লক্ষ্যকে একত্রে অর্জনই আমাদের জীবনদর্শন।
+                    </p>
                 </div>
+            </section>
 
-                <div className="grid sm:grid-cols-3 gap-6">
-                    {LEADERS.map((l, i) => (
-                        <div
-                            key={l.name}
-                            className={`relative bg-gradient-to-br ${l.color} border ${l.border} rounded-2xl p-6 hover:scale-[1.02] transition-all duration-300`}
-                            style={{
-                                opacity: visible ? 1 : 0,
-                                transform: visible ? "scale(1)" : "scale(0.95)",
-                                transition: `opacity 0.6s ease ${i * 0.15}s, transform 0.6s ease ${i * 0.15}s`,
-                            }}
-                        >
-                            {/* Avatar */}
-                            <div
-                                className="w-14 h-14 rounded-full border-2 flex items-center justify-center text-xl font-bold mb-4"
-                                style={{
-                                    borderColor: l.textColor + "50",
-                                    background: l.textColor + "18",
-                                    color: l.textColor,
-                                    fontFamily: "'Noto Serif Bengali', serif",
-                                }}
-                            >
-                                {l.initial}
-                            </div>
-                            <div className="font-bold text-white text-sm sm:text-base mb-1" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>
-                                {l.name}
-                            </div>
-                            <div className="text-xs mb-3 font-medium" style={{ color: l.textColor, fontFamily: "'Noto Serif Bengali', serif" }}>
-                                {l.role}
-                            </div>
-                            <p className="text-stone-400 text-xs sm:text-sm leading-relaxed" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>
-                                {l.desc}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </section>
-    );
-}
-
-function PhilosophySection() {
-    const [ref, visible] = useReveal();
-    return (
-        <section
-            ref={ref}
-            className="py-16 sm:py-24 px-4 sm:px-6 relative overflow-hidden"
-            style={{ background: "#0d1f1e" }}
-        >
-            <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-amber-500/4 blur-3xl" />
-            </div>
-
-            <div
-                className="relative max-w-3xl mx-auto text-center transition-all duration-700"
-                style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateY(24px)" }}
-            >
-                <div className="text-5xl sm:text-7xl text-amber-400/20 mb-4 leading-none" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>"</div>
-                <blockquote
-                    className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-relaxed mb-6"
-                    style={{ fontFamily: "'Noto Serif Bengali', serif", textShadow: "0 0 40px rgba(245,158,11,0.15)" }}
-                >
-                    আত্মমোক্ষার্থং জগদ্ধিতায় চ
-                </blockquote>
-                <p
-                    className="text-teal-300/80 text-base sm:text-lg mb-8"
-                    style={{ fontFamily: "'Noto Serif Bengali', serif" }}
-                >
-                    নিজের মুক্তির জন্য এবং জগতের কল্যাণের জন্য
-                </p>
-                <div className="w-16 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent mx-auto mb-8" />
-                <p
-                    className="text-stone-400 text-sm sm:text-base leading-relaxed"
-                    style={{ fontFamily: "'Noto Serif Bengali', serif" }}
-                >
-                    এই মহাবাক্যটি আনন্দমার্গের দর্শনের মূলে। ব্যক্তির আধ্যাত্মিক উন্নতি ও সমাজের সামগ্রিক কল্যাণ — এই দুই লক্ষ্যকে একত্রে অর্জনই আনন্দমার্গীদের জীবনদর্শন।
-                </p>
-            </div>
-        </section>
-    );
-}
-
-function Navbar({ scrolled }) {
-    const [menuOpen, setMenuOpen] = useState(false);
-    const NAV_LINKS = [
-        { label: "হোম", href: "/" },
-        { label: "আমাদের পরিচয়", href: "/about" },
-        { label: "কার্যক্রম", href: "/programs" },
-        { label: "সেবামূলক", href: "/service" },
-        { label: "যোগাযোগ", href: "/contact" },
-    ];
-    return (
-        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? "bg-[#0d1f1e]/95 backdrop-blur-md shadow-lg shadow-black/30" : "bg-transparent"}`}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-                <a href="/" className="flex items-center gap-2 sm:gap-3 group">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-base shadow-lg shadow-amber-500/30 group-hover:scale-110 transition-transform">🕉️</div>
-                    <div>
-                        <div className="text-amber-400 font-bold text-xs sm:text-sm leading-tight" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>আনন্দমার্গ</div>
-                        <div className="text-teal-300/70 text-[10px] tracking-widest uppercase">Bangladesh</div>
-                    </div>
-                </a>
-                <div className="hidden md:flex items-center gap-6 lg:gap-8">
-                    {NAV_LINKS.map((l) => (
-                        <a key={l.label} href={l.href} className="text-stone-300 hover:text-amber-400 text-sm transition-colors relative group" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>
-                            {l.label}
-                            <span className="absolute -bottom-1 left-0 w-0 h-px bg-amber-400 group-hover:w-full transition-all duration-300" />
-                        </a>
-                    ))}
-                    <a href="#donate" className="px-4 py-2 rounded-full bg-amber-500 hover:bg-amber-400 text-[#0d1f1e] font-bold text-sm transition-all hover:scale-105" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>দান করুন</a>
-                </div>
-                <button className="md:hidden text-stone-300 hover:text-amber-400 p-1" onClick={() => setMenuOpen(!menuOpen)}>
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        {menuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
-                    </svg>
-                </button>
-            </div>
-            <div className={`md:hidden overflow-hidden transition-all duration-300 ${menuOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0"}`}>
-                <div className="bg-[#0d1f1e]/98 backdrop-blur-md border-t border-amber-500/20 px-6 py-4 flex flex-col gap-3">
-                    {NAV_LINKS.map((l) => (
-                        <a key={l.label} href={l.href} onClick={() => setMenuOpen(false)} className="text-stone-300 hover:text-amber-400 py-1.5 text-sm border-b border-white/5 last:border-0" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>{l.label}</a>
-                    ))}
-                    <a href="#donate" className="mt-2 px-4 py-2.5 rounded-full bg-amber-500 text-[#0d1f1e] font-bold text-sm text-center" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>দান করুন</a>
-                </div>
-            </div>
-        </nav>
-    );
-}
-
-function Footer() {
-    return (
-        <footer className="bg-[#080f0e] border-t border-white/5 py-8 px-4 sm:px-6">
-            <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                    <span className="text-2xl">🕉️</span>
-                    <div>
-                        <div className="text-amber-400 font-bold text-sm" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>আনন্দমার্গ প্রচারক সংঘ</div>
-                        <div className="text-stone-500 text-xs">Bangladesh</div>
-                    </div>
-                </div>
-                <p className="text-stone-600 text-xs text-center" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>© ২০২৫ আনন্দমার্গ বাংলাদেশ। সর্বস্বত্ব সংরক্ষিত।</p>
-                <div className="flex gap-4 text-stone-500 text-xs" style={{ fontFamily: "'Noto Serif Bengali', serif" }}>
-                    <a href="#" className="hover:text-amber-400 transition-colors">গোপনীয়তা নীতি</a>
-                    <a href="#" className="hover:text-amber-400 transition-colors">যোগাযোগ</a>
-                </div>
-            </div>
-        </footer>
-    );
-}
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
-export default function AboutPage() {
-    const [scrolled, setScrolled] = useState(false);
-
-    useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 60);
-        window.addEventListener("scroll", handleScroll, { passive: true });
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
-
-    return (
-        <div className="min-h-screen" style={{ background: "#0d1f1e" }}>
-            <link
-                href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;600;700&family=Hind+Siliguri:wght@400;500&display=swap"
-                rel="stylesheet"
-            />
-
-            <Navbar scrolled={scrolled} />
-            <HeroBanner />
-            <MissionSection />
-            <TimelineSection />
-            <LeadershipSection />
-            <PhilosophySection />
-            <Footer />
-
-            <MusicPlayer src="/audio/baba-nam-kevalam.mp3" />
-        </div>
+            <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}`}</style>
+        </>
     );
 }
