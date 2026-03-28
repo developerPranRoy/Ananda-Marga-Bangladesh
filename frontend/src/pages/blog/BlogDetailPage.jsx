@@ -17,14 +17,15 @@ export default function BlogDetailPage() {
     useEffect(() => { fetchBlog(); }, [slug]);
 
     const fetchBlog = async () => {
+        console.log("Fetching slug:", slug); // যোগ করো
         setLoading(true);
         const { data, error } = await supabase
             .from("blogs")
-            .select("*, profiles(id, display_name, avatar_url, bio, show_real_name, show_email)")
+            .select("*, profiles(id, name, avatar_url, bio, show_email)")
             .eq("slug", slug)
             .eq("status", "published")
             .single();
-
+        console.log("Blog data:", data, "Error:", error); // যোগ করো
         if (error || !data) { setError("ব্লগটি পাওয়া যায়নি।"); setLoading(false); return; }
         setBlog(data);
         setLoading(false);
