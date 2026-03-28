@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "../utils/supabase";
 
 const bn = { fontFamily: "'Noto Serif Bengali', serif" };
 
@@ -28,14 +29,33 @@ export default function ContactPage() {
 
     const submit = async (e) => {
         e.preventDefault();
+
+        // Validation
         const er = {};
         if (!form.name.trim()) er.name = "নাম লিখুন";
         if (!/\S+@\S+\.\S+/.test(form.email)) er.email = "সঠিক ইমেইল লিখুন";
         if (!form.topic) er.topic = "বিষয় বেছে নিন";
         if (form.message.trim().length < 10) er.message = "অন্তত ১০ অক্ষর লিখুন";
         if (Object.keys(er).length) { setErrors(er); return; }
+
+        // Submit
         setStatus("sending");
-        await new Promise((r) => setTimeout(r, 1500));
+        const { error } = await supabase
+            .from("contact_messages")
+            .insert({
+                name: form.name.trim(),
+                email: form.email.trim(),
+                phone: form.phone.trim() || null,
+                topic: form.topic || null,
+                message: form.message.trim(),
+            });
+
+        if (error) {
+            setErrors({ submit: "বার্তা পাঠানো যায়নি: " + error.message });
+            setStatus("idle");
+            return;
+        }
+
         setStatus("success");
     };
 
@@ -126,6 +146,8 @@ export default function ContactPage() {
                                         <span style={{ color: "#57534e", fontSize: 11, marginLeft: "auto" }}>{form.message.length} অক্ষর</span>
                                     </div>
                                 </div>
+
+
 
                                 <button type="submit" disabled={status === "sending"}
                                     style={{ ...bn, marginTop: 20, width: "100%", padding: "13px", borderRadius: 999, border: "none", background: status === "sending" ? "rgba(245,158,11,0.4)" : "linear-gradient(90deg,#f59e0b,#ea580c)", color: "#0d1f1e", fontWeight: 700, fontSize: 14, cursor: status === "sending" ? "not-allowed" : "pointer", transition: "all 0.2s" }}>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "../utils/supabase";
 
 const bn = { fontFamily: "'Noto Serif Bengali', serif" };
 const fmt = (n) => "৳" + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -296,7 +297,20 @@ export default function DonationPage() {
                         <div style={{ padding: 24 }}>
                             {step === 1 && <Step1 d={d} set={patch} next={() => setStep(2)} />}
                             {step === 2 && <Step2 d={d} set={patch} next={() => setStep(3)} back={() => setStep(1)} />}
-                            {step === 3 && <Step3 d={d} set={patch} amount={amount} next={() => setStep(4)} back={() => setStep(2)} />}
+
+                            {step === 3 && <Step3 d={d} set={patch} amount={amount} back={() => setStep(2)} next={async () => {
+                                const { error } = await supabase.from("donations").insert({
+                                    donor_name: d.anon ? null : d.name?.trim() || null,
+                                    email: d.anon ? null : d.email?.trim() || null,
+                                    phone: d.anon ? null : d.phone?.trim() || null,
+                                    amount, cause: d.cause, payment: d.payment,
+                                    anonymous: d.anon, status: "pending",
+                                });
+                                if (error) { alert("সমস্যা: " + error.message); return; }
+                                setStep(4);
+                            }} />}
+
+
                             {step === 4 && <Step4 amount={amount} cause={d.cause} payment={d.payment} reset={reset} />}
                         </div>
                     </div>
